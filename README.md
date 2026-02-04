@@ -28,6 +28,7 @@ python -m poetry run python manage.py migrate
 
 # 서버 실행
 python -m poetry run python manage.py runserver
+
 ```
 
 ## 2. 🤝 Git 협업 가이드 (Git Usage)
@@ -48,6 +49,7 @@ git commit -m "feat: 어떤 기능을 추가했는지 적어주세요"
 
 # 자신의 브랜치에 업데이트
 git push origin [본인의-브랜치-이름]
+
 ```
 
 ## 3. 🤝 Git 브랜치 생성
@@ -67,6 +69,7 @@ git merge feature/[기능이름]  # ex)feature/Login, feature/SignUp
 
 # 3. 합쳐진 최신 main을 서버에 올림
 git push origin main
+
 ```
 
 ## 4. 🗄️ 데이터베이스 업데이트 (Database Migration)
@@ -93,3 +96,51 @@ python -m poetry run python manage.py makemigrations
 python -m poetry run python manage.py migrate
 
 ```
+
+## 5. 📦 라이브러리 추가 및 관리 (Dependency Management)
+
+프로젝트에 새로운 기능이 필요하여 외부 라이브러리를 설치할 때는 반드시 `poetry` 명령어를 사용해야 팀원들과 개발 환경을 동기화할 수 있습니다.
+
+### 라이브러리 설치하기 (Add)
+```bash
+# 최신 버전으로 설치할 때
+python -m poetry add 라이브러리이름
+
+# 특정 버전을 지정해서 설치할 때
+python -m poetry add 라이브러리이름@버전
+# 예: python -m poetry add django@5.1.0
+
+```
+
+### 라이브러리 버전 확인하기 (Show)
+만약 현재 설치된 라이브러리의 정확한 버전이 궁금하거나, 어떤 라이브러리들이 있는지 확인하고 싶을 때 사용합니다.
+
+```bash
+# 전체 설치된 라이브러리 목록과 버전 확인
+python -m poetry show
+
+# 특정 라이브러리의 상세 정보와 버전 확인
+python -m poetry show 라이브러리이름
+
+```
+
+### 팀원이 추가한 라이브러리 내 컴퓨터에 반영하기
+다른 팀원이 새로운 라이브러리를 추가해서 pyproject.toml 파일을 업데이트했다면, 내 컴퓨터에서도 아래 명령어를 실행해야 합니다.
+
+```bash
+# 최신화된 설정을 내 가상환경에 적용
+python -m poetry install
+
+```
+
+### 💡 라이브러리 버전 연산자 가이드 (Version Operators)
+
+| 연산자 | 위치 | 의미 | 예시 |
+| :--- | :--- | :--- | :--- |
+| **`@`** | **터미널** | 특정 버전을 지칭하여 설치할 때 사용 | `poetry add django@5.1.0` |
+| **`^`** | **파일 내** | **(권장)** 지정된 버전과 호환되는 최신 버전 설치 (Major 버전 고정) | `django = "^5.1.0"` (5.1.0 이상 ~ 6.0.0 미만) |
+| **`==`** | **파일 내** | 정확히 해당 버전만 사용하도록 강제 | `django = "==5.1.0"` |
+| **`>=`** | **파일/터미널** | 최소 버전 이상이라면 어떤 것이든 허용 | `"django>=5.1.0"` |
+| **`>`** | **파일/터미널** | 해당 버전보다 더 높은 버전만 허용 | `"django>5.1.0"` |
+
+> **팁:** 터미널에서 `>` 또는 `>=` 기호를 사용할 때는 명령어 오류 방지를 위해 반드시 따옴표(`" "`)로 감싸주어야 합니다.
