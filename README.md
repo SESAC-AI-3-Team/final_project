@@ -107,8 +107,8 @@ python -m poetry run python manage.py migrate
 python -m poetry add 라이브러리이름
 
 # 특정 버전을 지정해서 설치할 때
-python -m poetry add 라이브러리이름@버전
-# 예: python -m poetry add django@5.1.0
+python -m poetry add 라이브러리이름>=버전
+# 예: python -m poetry add django>=5.1.0
 
 ```
 
@@ -131,16 +131,20 @@ python -m poetry show 라이브러리이름
 # 최신화된 설정을 내 가상환경에 적용
 python -m poetry install
 
+# pyproject.toml changed significantly since poetry.lock was last generated. Run `poetry lock` to fix the lock file. 
+# poetry.lock 파일이 pyproject.toml 파일보다 최신 버전이 아니면 아래 명령어를 실행
+python -m poetry lock
+
 ```
 
 ### 💡 라이브러리 버전 연산자 가이드 (Version Operators)
 
 | 연산자 | 위치 | 의미 | 예시 |
 | :--- | :--- | :--- | :--- |
-| **`@`** | **터미널** | 특정 버전을 지칭하여 설치할 때 사용 | `poetry add django@5.1.0` |
-| **`^`** | **파일 내** | **(권장)** 지정된 버전과 호환되는 최신 버전 설치 (Major 버전 고정) | `django = "^5.1.0"` (5.1.0 이상 ~ 6.0.0 미만) |
-| **`==`** | **파일 내** | 정확히 해당 버전만 사용하도록 강제 | `django = "==5.1.0"` |
-| **`>=`** | **파일/터미널** | 최소 버전 이상이라면 어떤 것이든 허용 | `"django>=5.1.0"` |
-| **`>`** | **파일/터미널** | 해당 버전보다 더 높은 버전만 허용 | `"django>5.1.0"` |
+| **`@`** | **터미널** | 특정 버전을 지칭하여 설치할 때 사용 | `python -m poetry add django@5.1.0` |
+| **`==`** | **파일 내** | 정확히 해당 버전만 사용하도록 강제 | `python -m poetry add django==5.1.0` |
+| **`>=`** | **파일/터미널** | 최소 버전 이상이라면 어떤 것이든 허용 | `python -m poetry add django>=5.1.0` |
+| **`>`** | **파일/터미널** | 해당 버전보다 더 높은 버전만 허용 | `python -m poetry add django>5.1.0` |
 
 > **팁:** 터미널에서 `>` 또는 `>=` 기호를 사용할 때는 명령어 오류 방지를 위해 반드시 따옴표(`" "`)로 감싸주어야 합니다.
+
