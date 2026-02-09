@@ -27,8 +27,10 @@ RUN pip install "poetry==$POETRY_VERSION"
 COPY pyproject.toml poetry.lock* /app/
 
 # 7. 가상환경 생성 없이 시스템에 직접 패키지 설치 (컨테이너 내부이므로 안전)
+# poetry.lock이 깨졌거나 없을 경우를 대비해 lock 파일을 다시 생성합니다.
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+    && if [ ! -f poetry.lock ]; then poetry lock; fi \
+    && poetry install --no-interaction --no-ansi || (poetry lock && poetry install --no-interaction --no-ansi)
 
 # 8. 나머지 프로젝트 코드 전체 복사
 COPY . /app/

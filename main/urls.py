@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
@@ -9,4 +9,7 @@ urlpatterns = [
     path('meeting/<int:meeting_id>/board/', views.meeting_board_view, name='meeting_board'),
     path('meeting/<int:meeting_id>/ocr/', views.meeting_ocr_view, name='meeting_ocr'),
     path('meeting/<int:meeting_id>/schedule/', views.meeting_schedule_view, name='meeting_schedule'),
+    # Catch-all for react routes that are not defined in Django
+    re_path(r'^.*$', views.main_view),
 ]
+

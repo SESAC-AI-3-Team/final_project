@@ -39,9 +39,26 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'corsheaders',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.naver',
+    'allauth.socialaccount.providers.kakao',
 ]
 
+SITE_ID = 1
+
+# 소셜 로그인 후 리다이렉트 경로 등 설정
+SOCIALACCOUNT_PROVIDERS = {
+    'google': { 'SCOPE': ['profile', 'email'], 'AUTH_PARAMS': {'access_type': 'online'} },
+    'kakao': { 'APP': {'client_id': '지누님의_카카오_키', 'secret': '...', 'key': ''} }
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -49,14 +66,18 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True # 개발 환경용 (배포 시 특정 도메인만 허용해야 함)
+
 
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR / 'frontend' / 'legacy' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,7 +92,7 @@ TEMPLATES = [
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # 이 경로에 실제 폴더가 있어야 합니다!
+    BASE_DIR / 'frontend' / 'legacy' / 'static',
 ]
 
 # 배포 시 파일들을 한곳으로 모으는 경로 (보통 루트의 static_root 등)
