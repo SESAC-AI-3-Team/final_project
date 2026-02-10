@@ -12,3 +12,10 @@ db.sqlite3
 
 # Poetry 관련
 .python-version
+
+# linear api key
+list_teams.js
+teams_result.json
+
+# antigravity agent
+.agent
