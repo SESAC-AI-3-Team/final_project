@@ -15,6 +15,7 @@ db.sqlite3
 
 # linear api key
 list_teams.js
+sync_linear.js
 teams_result.json
 
 # antigravity agent
