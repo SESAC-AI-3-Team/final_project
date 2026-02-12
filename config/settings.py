@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
 ]
 
+AUTH_USER_MODEL = "main.User"
+
+
 SITE_ID = 1
 
 # 소셜 로그인 후 리다이렉트 경로 등 설정
