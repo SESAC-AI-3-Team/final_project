@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, User, Mail, Phone, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+// import logo from './icon/logo.png'; // Removed import
 
 const MyPage = () => {
     const navigate = useNavigate();
@@ -26,9 +27,7 @@ const MyPage = () => {
                             <ArrowLeft className="w-6 h-6" />
                         </button>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-                                <span className="text-white text-lg">mo</span>
-                            </div>
+                            <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-10 w-auto" />
                             <h1 className="text-2xl font-bold">마이페이지</h1>
                         </div>
                     </div>

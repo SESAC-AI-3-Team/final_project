@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+// import logo from './icon/logo.png'; // Removed import
 
 const Signup = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -74,7 +75,8 @@ const Signup = () => {
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
                 <div className="w-full max-w-md">
                     {/* Header */}
-                    <div className="mb-8">
+                    <div className="mb-8 flex flex-col items-center">
+                        <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-16 w-auto mb-4" />
                         <h1 className="text-3xl font-medium mb-2">Momo</h1>
                         <p className="text-gray-600">회원가입하여 모임을 시작하세요</p>
                     </div>

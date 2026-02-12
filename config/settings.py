@@ -53,9 +53,53 @@ SITE_ID = 1
 
 # 소셜 로그인 후 리다이렉트 경로 등 설정
 SOCIALACCOUNT_PROVIDERS = {
-    'google': { 'SCOPE': ['profile', 'email'], 'AUTH_PARAMS': {'access_type': 'online'} },
-    'kakao': { 'APP': {'client_id': '지누님의_카카오_키', 'secret': '...', 'key': ''} }
+    'naver': {
+        # 'APP': {
+        #     'client_id': '',
+        #     'secret': '',
+        #     'key': ''
+        # }
+    },
+    'kakao': {
+        # 'APP': {
+        #     'client_id': '',
+        #     'secret': '',
+        #     'key': ''
+        # }
+    },
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
 }
+
+# 로그인 후 리다이렉트할 주소 (예: /main/)
+LOGIN_REDIRECT_URL = '/main'
+# 로그아웃 후 리다이렉트할 주소
+ACCOUNT_LOGOUT_REDIRECT_URL = '/login'
+
+# 1. 로그인 수단 설정 (중괄호 세트 형태)
+ACCOUNT_LOGIN_METHODS = {'email'}
+
+# 2. 가입 시 받을 필드 (리스트 형태)
+ACCOUNT_SIGNUP_FIELDS = ['email']
+
+# 3. 기타 필수 설정
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = "none" # 또는 "mandatory" (지누님 선택)
+
+# 소셜 관련
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ERROR_REDIRECT_URL = '/login'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

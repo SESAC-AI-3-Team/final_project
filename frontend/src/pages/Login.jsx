@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+// import logo from './icon/logo.png'; // Removed import
 
 const Login = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -74,7 +75,8 @@ const Login = () => {
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
                 <div className="w-full max-w-md">
                     {/* Header */}
-                    <div className="mb-8">
+                    <div className="mb-8 flex flex-col items-center">
+                        <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-16 w-auto mb-4" />
                         <h1 className="text-3xl font-medium mb-2">Momo</h1>
                         <p className="text-gray-600">모임의 모든것</p>
                     </div>
@@ -148,7 +150,8 @@ const Login = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                        <button
+                        <a
+                            href="http://localhost:8000/accounts/google/login/?process=login"
                             type="button"
                             className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
@@ -171,25 +174,22 @@ const Login = () => {
                                 />
                             </svg>
                             <span className="text-sm font-medium text-gray-700">Google</span>
-                        </button>
-                        <button
-                            type="button"
-                            className="flex items-center justify-center px-4 py-2 rounded-lg transition-colors w-full"
-                            style={{ backgroundColor: '#03C75A' }} // 네이버 공식 초록색
+                        </a>
+                        <a
+                            href="http://localhost:8000/accounts/naver/login/?process=login"
+                            className="flex items-center justify-center px-4 py-2 rounded-lg transition-colors"
+                            style={{ backgroundColor: '#03C75A' }}
                         >
-                            {/* 네이버 'N' 로고 SVG */}
                             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none">
                                 <path
                                     d="M16.273 12.845L7.376 0H0V24H7.726V11.155L16.624 24H24V0H16.273V12.845Z"
-                                    fill="#FFFFFF" // 로고는 흰색
+                                    fill="#FFFFFF"
                                 />
                             </svg>
-                            <span className="text-sm font-bold" style={{ color: '#FFFFFF' }}>
-                                Naver
-                            </span>
-                        </button>
-                        <button
-                            type="button"
+                            <span className="text-sm font-bold text-white">Naver</span>
+                        </a>
+                        <a
+                            href="http://localhost:8000/accounts/kakao/login/?process=login"
                             className="flex items-center justify-center px-4 py-2 rounded-lg transition-colors w-full"
                             style={{ backgroundColor: '#FEE500' }} // 카카오 공식 노란색
                         >
@@ -202,7 +202,7 @@ const Login = () => {
                                 />
                             </svg>
                             <span className="text-sm font-medium text-gray-700">Kakao</span>
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>

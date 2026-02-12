@@ -3,6 +3,7 @@ import {
     Settings, LogOut, Plus, UserPlus, Users, Calendar, UserMinus, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+// import logo from './icon/logo.png'; // Removed import
 
 const Main = () => {
     const navigate = useNavigate();
@@ -43,9 +44,7 @@ const Main = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-                                <span className="text-white text-lg">mo</span>
-                            </div>
+                            <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-10 w-auto" />
                             <h1 className="text-2xl font-bold">momo</h1>
                         </div>
 

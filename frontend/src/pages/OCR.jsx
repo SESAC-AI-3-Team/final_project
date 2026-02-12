@@ -1,24 +1,35 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { ArrowLeft, Camera, Upload, FileText, CheckCircle, Bot, X, RotateCcw } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AIChatModal from '../components/AIChatModal';
 import BottomNav from '../components/BottomNav';
+// import logo from './icon/logo.png'; // Removed import
 
 const OCR = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-    const [isDashboardDropdownOpen, setIsDashboardDropdownOpen] = useState(false);
+
+    // State for file and image preview
+    const [selectedFile, setSelectedFile] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
+
+    // State for upload process
+    const [uploadStatus, setUploadStatus] = useState('idle'); // idle, uploading, success, error
+    const [uploadResult, setUploadResult] = useState(null);
+
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            setSelectedFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setSelectedImage(reader.result);
+                setUploadStatus('idle');
+                setUploadResult(null);
             };
             reader.readAsDataURL(file);
         }
@@ -26,8 +37,39 @@ const OCR = () => {
 
     const handleCancelImage = () => {
         setSelectedImage(null);
+        setSelectedFile(null);
+        setUploadStatus('idle');
+        setUploadResult(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (cameraInputRef.current) cameraInputRef.current.value = '';
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+
+        setUploadStatus('uploading');
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+
+        try {
+            const response = await fetch(`/api/meeting/${id}/ocr/upload/`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const data = await response.json();
+            setUploadResult(data);
+            setUploadStatus('success');
+            console.log('Upload success:', data);
+        } catch (error) {
+            console.error('Upload error:', error);
+            setUploadStatus('error');
+            alert('업로드에 실패했습니다.');
+        }
     };
 
     return (
@@ -40,9 +82,7 @@ const OCR = () => {
                                 <ArrowLeft className="w-6 h-6" />
                             </button>
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-                                    <span className="text-white text-lg">mo</span>
-                                </div>
+                                <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-10 w-auto" />
                                 <h1 className="text-2xl font-bold">독서 모임</h1>
                             </div>
                         </div>
@@ -52,16 +92,10 @@ const OCR = () => {
                                 일정
                             </button>
                             <div className="relative">
-                                <button onClick={() => setIsDashboardDropdownOpen(!isDashboardDropdownOpen)} className="px-4 py-2 rounded-lg transition-colors text-muted-foreground hover:bg-gray-100 font-medium">
+                                {/* Dashboard dropdown logic would go here if needed */}
+                                <button onClick={() => navigate(`/meeting/${id}/dashboard`)} className="px-4 py-2 rounded-lg transition-colors text-muted-foreground hover:bg-gray-100 font-medium">
                                     회비 대시보드
                                 </button>
-                                {isDashboardDropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-border rounded-lg shadow-lg z-20">
-                                        <button onClick={() => navigate(`/meeting/${id}/detail`)} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">대시보드 조회</button>
-                                        <button onClick={() => navigate(`/meeting/${id}/detail?filter=income`)} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">수입 조회</button>
-                                        <button onClick={() => navigate(`/meeting/${id}/detail?filter=expense`)} className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors">지출 조회</button>
-                                    </div>
-                                )}
                             </div>
                             <button onClick={() => navigate(`/meeting/${id}/board`)} className="px-4 py-2 rounded-lg transition-colors text-muted-foreground hover:bg-gray-100 font-medium">
                                 모임 게시판
@@ -99,12 +133,26 @@ const OCR = () => {
                                         <button
                                             onClick={() => fileInputRef.current.click()}
                                             className="px-4 py-2 border border-border text-gray-600 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm font-medium"
+                                            disabled={uploadStatus === 'uploading'}
                                         >
                                             <RotateCcw className="w-4 h-4" />
                                             다시 선택
                                         </button>
-                                        <button className="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
-                                            인식 시작하기
+                                        <button
+                                            onClick={handleUpload}
+                                            disabled={uploadStatus === 'uploading'}
+                                            className={`px-6 py-2 bg-primary text-white rounded-lg transition-all font-medium flex items-center gap-2
+                                                ${uploadStatus === 'uploading' ? 'opacity-70 cursor-wait' : 'hover:opacity-90'}
+                                            `}
+                                        >
+                                            {uploadStatus === 'uploading' ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    업로드 중...
+                                                </>
+                                            ) : (
+                                                '인식 시작하기'
+                                            )}
                                         </button>
                                     </div>
                                 </div>
@@ -160,44 +208,34 @@ const OCR = () => {
                         </div>
 
                         {/* Example Result */}
-                        <div className="space-y-4">
-                            <h3 class="text-lg font-medium">처리 결과</h3>
-                            <div className="bg-white rounded-xl p-6 shadow-sm">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                            <FileText className="w-6 h-6 text-primary" />
+                        {uploadStatus === 'success' && uploadResult && (
+                            <div className="space-y-4 animate-fade-in">
+                                <h3 className="text-lg font-medium">처리 결과</h3>
+                                <div className="bg-white rounded-xl p-6 shadow-sm">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                <FileText className="w-6 h-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h4 className="mb-1 font-medium">{uploadResult.filename}</h4>
+                                                <p className="text-sm text-muted-foreground">업로드 완료</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="mb-1 font-medium">영수증_2026-02-05.jpg</h4>
-                                            <p className="text-sm text-muted-foreground">2026-02-05</p>
-                                        </div>
+                                        <span className="flex items-center gap-1 text-green-600 text-sm">
+                                            <CheckCircle className="w-4 h-4" />
+                                            완료
+                                        </span>
                                     </div>
-                                    <span className="flex items-center gap-1 text-green-600 text-sm">
-                                        <CheckCircle className="w-4 h-4" />
-                                        완료
-                                    </span>
+                                    <div className="p-4 bg-gray-50 rounded-lg text-center text-muted-foreground mb-4">
+                                        OCR 분석 결과가 여기에 표시됩니다. (현재는 업로드만 구현됨)
+                                    </div>
+                                    <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
+                                        거래 내역에 추가
+                                    </button>
                                 </div>
-
-                                <div className="space-y-2 mb-4 p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">아메리카노</span>
-                                        <span>4,500원</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">카페라떼</span>
-                                        <span>5,000원</span>
-                                    </div>
-                                    <div className="pt-2 border-t border-border flex justify-between font-medium">
-                                        <span>총액</span>
-                                        <span className="text-xl text-primary">9,500원</span>
-                                    </div>
-                                </div>
-                                <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-                                    거래 내역에 추가
-                                </button>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
