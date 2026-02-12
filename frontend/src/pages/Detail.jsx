@@ -3,6 +3,7 @@ import { ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, AlignLeft, Users, B
 import { useNavigate, useParams } from 'react-router-dom';
 import AIChatModal from '../components/AIChatModal';
 import BottomNav from '../components/BottomNav';
+// import logo from './icon/logo.png'; // Removed import
 
 const Detail = () => {
     const navigate = useNavigate();
@@ -36,9 +37,7 @@ const Detail = () => {
                                 <ArrowLeft className="w-6 h-6" />
                             </button>
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-                                    <span className="text-white text-lg">mo</span>
-                                </div>
+                                <img src="http://localhost:8000/static/icon/logo.png" alt="Momo Logo" className="h-10 w-auto" />
                                 <h1 className="text-2xl font-bold">일정 상세</h1>
                             </div>
                         </div>
