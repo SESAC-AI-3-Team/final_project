@@ -24,5 +24,6 @@ teams_result.json
 # mac 환경
 .DS_Store
 
+# firebase
 serviceAccountKey.json
 firebase-messaging-sw.js
