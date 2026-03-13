@@ -1,42 +1,63 @@
-# 1. 파이썬 3.12 슬림 버전 이미지 사용 (경량화)
-FROM python:3.12-slim
+# 1. CUDA 지원을 위한 NVIDIA L4 기반 최적화 이미지 사용
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
 # 2. 환경 변수 설정
-# PYTHONDONTWRITEBYTECODE=1: .pyc 파일 생성 방지 (디스크 쓰기 최소화)
-# PYTHONUNBUFFERED=1: 로그를 버퍼링 없이 즉시 출력 (디버깅 용이)
-# POETRY_VERSION: Poetry 버전 고정
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    POETRY_VERSION=2.3.2
+    POETRY_VERSION=2.3.2 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    DEBIAN_FRONTEND=noninteractive
 
 # 3. 작업 디렉토리 설정
-# /app은 컨테이너 내부의 경로입니다. 호스트(내 컴퓨터)에 이 폴더가 없어도 됩니다.
 WORKDIR /app
 
-# 4. 필요한 시스템 패키지 설치
-# --no-install-recommends: 필수 패키지만 설치하여 이미지 크기 줄임
+# 4. 필요한 시스템 패키지 및 Python 3.12 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    software-properties-common \
+    git \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-dev \
+    python3.12-venv \
     build-essential \
     libpq-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
-# 5. Poetry 설치
+# 5. Poetry 및 기본 도구 설치
 RUN pip install "poetry==$POETRY_VERSION"
 
-# 6. 의존성 파일만 먼저 복사 (캐싱 활용)
+# 6. 의존성 파일 복사 및 설치
 COPY pyproject.toml poetry.lock* /app/
 
-# 7. 가상환경 생성 없이 시스템에 직접 패키지 설치 (컨테이너 내부이므로 안전)
-# poetry.lock이 깨졌거나 없을 경우를 대비해 lock 파일을 다시 생성합니다.
-RUN poetry config virtualenvs.create false \
-    && if [ ! -f poetry.lock ]; then poetry lock; fi \
-    && poetry install --no-interaction --no-ansi || (poetry lock && poetry install --no-interaction --no-ansi)
+# Poetry를 사용하여 의존성을 시스템 Python 환경에 설치합니다.
+# pyproject.toml이 크게 변경되었으므로 lock 파일을 먼저 동기화합니다.
 
+# RUN poetry config virtualenvs.create false \
+#     && if [ ! -f poetry.lock ]; then poetry lock; fi \
+#     && poetry install --no-interaction --no-ansi || (poetry lock && poetry install --no-interaction --no-ansi)
+
+RUN poetry config virtualenvs.create false \
+    && python -m pip install --upgrade pip \
+    && python -m pip install --ignore-installed blinker \
+    && poetry install --no-interaction --no-ansi
 # 8. 나머지 프로젝트 코드 전체 복사
 COPY . /app/
+
 
 # 9. 포트 개방
 EXPOSE 8000
 
 # 10. 서버 실행 명령어
+# CMD ["tail", "-f", "/dev/null"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

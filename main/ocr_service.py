@@ -10,7 +10,9 @@ import sys
 import re
 import glob
 import shutil
-from PIL import Image
+import json
+import requests
+from PIL import Image, ImageOps
 
 
 # ============================================================
@@ -23,6 +25,7 @@ MODEL_PATH      = os.path.join(OCR_DIR, 'PaddleOCR-VL-SFT-recipt')
 # BASE_MODEL_PATH = os.path.join(OCR_DIR, 'PaddleOCR-VL-1.5')
 FT_WEIGHTS      = os.path.join(MODEL_PATH, "model-00001-of-00001.safetensors")
 MAX_PIXELS      = 1280 * 28 * 28
+FIELDS          = ["상호명", "사업자번호", "날짜", "합계"]
 
 # DEVICE는 torch 로드 이후에 결정 (lazy)
 _DEVICE = None
@@ -131,7 +134,33 @@ def _extract_ocr_text(image: Image.Image) -> str:
     return raw.strip()
 
 
-def _regex_extract(ocr: str) -> dict:
+def post_process_dict(d: dict) -> dict:
+    res = dict(d)
+    if res.get("사업자번호"):
+        biz = re.sub(r'\D', '', res["사업자번호"])
+        if len(biz) == 10:
+            res["사업자번호"] = f"{biz[:3]}-{biz[3:5]}-{biz[5:]}"
+    if res.get("날짜"):
+        date_str = res["날짜"].strip()
+        m1 = re.match(r'^(\d{2})[-./](\d{1,2})[-./](\d{1,2})$', date_str)
+        if m1:
+            res["날짜"] = f"20{m1.group(1)}-{int(m1.group(2)):02d}-{int(m1.group(3)):02d}"
+        else:
+            m2 = re.match(r'^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$', date_str)
+            if m2:
+                res["날짜"] = f"{m2.group(1)}-{int(m2.group(2)):02d}-{int(m2.group(3)):02d}"
+    if res.get("합계"):
+        total_str = res["합계"].strip()
+        m = re.match(r'^([\d,]+)', total_str)
+        if m:
+            total = m.group(1).replace(',', '')
+            res["합계"] = total
+        else:
+            res["합계"] = re.sub(r'[^\d]', '', total_str)
+            
+    return res
+
+def _pure_regex_extract(ocr: str) -> dict:
     """한국 영수증 정규식 필드 추출 (ocr/start.py 의 regex_extract 동일)"""
     lines = [l.strip() for l in ocr.split('\n') if l.strip()]
 
@@ -204,6 +233,62 @@ def _regex_extract(ocr: str) -> dict:
         "합계":      total,
     }
 
+def _llm_extract(ocr: str) -> dict:
+    prompt = f'''
+당신은 한국 영수증(Korean Receipt) 정보 추출 전문가입니다. 
+다음 영수증 OCR 텍스트에서 4가지 핵심 정보를 찾아 JSON 형식으로만 반환하세요.
+
+[추출 대상 및 가이드라인]
+1. "상호명": 가맹점, 매장, 회사 이름 (예: 스타벅스, (주)아성다이소, CU 등)
+2. "사업자번호": 10자리 숫자로 구성된 사업자등록번호. 주로 '사업자번호', '등록번호' 등의 키워드 뒤에 123-45-67890 또는 1234567890 형태로 등장합니다. (하이픈 포함 무방)
+3. "날짜": 결제일, 승인일, 거래일. 숫자 형태의 날짜를 찾아 YYYY-MM-DD 형태로 변환하세요. (예: 25-04-19 -> 25-04-19, 2024.12.31 -> 2024-12-31)
+4. "합계": 총 결제금액, 받은금액, 합계 등 영수증의 최종 청구/결제 금액 딱 1개만 추출하세요. (예: 17,900, 5,000, 26,200 처럼 여러 개를 나열하지 말고 가장 중요한 결제 금액 하나만 추출). 숫자에서 쉼표(,)는 제외하고 순수 숫자만 반환하세요 (예: 17900).
+
+[출력 형식 제한]
+- 반드시 JSON 객체만 출력해야 하며, 마크다운 코드 블록이나 추가적인 설명은 절대 포함하지 마세요.
+- JSON key는 정확히 "상호명", "사업자번호", "날짜", "합계" 4개만 사용하세요.
+- 텍스트에서 정보를 찾을 수 없거나 인식할 수 없는 경우, 해당 key의 값은 빈 문자열("")로 설정하세요.
+
+[OCR 텍스트]
+{ocr}
+'''
+    ollama_base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip('/')
+    try:
+        res = requests.post(f"{ollama_base_url}/api/generate", json={
+            "model": "llama3.2",
+            "prompt": prompt,
+            "format": "json",
+            "stream": False
+        }, timeout=30)
+        if res.status_code == 200:
+            content = res.json().get('response', '{}')
+            parsed = json.loads(content)
+            print(parsed)
+            return post_process_dict({k: str(parsed.get(k, "")) for k in FIELDS})
+        else:
+            print(res.status_code)
+    except Exception as e:
+        print(f"Ollama error: {e}")
+    return post_process_dict({k: "" for k in FIELDS})
+
+def _regex_extract(ocr: str) -> dict:
+    regex_pred = _pure_regex_extract(ocr)
+    llm_pred = _llm_extract(ocr)
+    
+    hybrid_pred = {}
+    for k in FIELDS:
+        if k == "사업자번호":
+            llm_val = llm_pred.get(k, "")
+            if re.match(r'^\d{3}-\d{2}-\d{5}$', llm_val):
+                hybrid_pred[k] = llm_val
+            else:
+                hybrid_pred[k] = regex_pred.get(k, "")
+        else:
+            llm_val = llm_pred.get(k, "")
+            hybrid_pred[k] = llm_val if llm_val else regex_pred.get(k, "")
+            
+    return post_process_dict(hybrid_pred)
+
 
 # ============================================================
 # [3] 외부에서 호출하는 메인 함수
@@ -236,6 +321,7 @@ def run_ocr(image: Image.Image) -> dict:
 
     try:
         ocr_text = _extract_ocr_text(image)
+        print(ocr_text)
         fields   = _regex_extract(ocr_text)
         return {
             'success': True,

@@ -86,6 +86,7 @@ const OCR = () => {
     const [uploadResult, setUploadResult] = useState(null);
     const [editableResult, setEditableResult] = useState(null); // 수정 가능한 상태 추가
     const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isResultModalOpen) {
@@ -167,7 +168,7 @@ const OCR = () => {
     };
 
     const handleAddTransaction = async () => {
-        if (!editableResult) return;
+        if (!editableResult || isSaving) return;
 
         if (
             !editableResult.storeName || String(editableResult.storeName).trim().toLowerCase() === 'null' ||
@@ -179,6 +180,7 @@ const OCR = () => {
             return;
         }
 
+        setIsSaving(true);
         const amount = editableResult.amount ? parseInt(editableResult.amount, 10) : 0;
         const title = editableResult.storeName || '영수증 인식';
         const date = editableResult.date || new Date().toISOString().slice(0, 10);
@@ -223,6 +225,8 @@ const OCR = () => {
             handleCancelImage();
         } catch (err) {
             alert(`실패: ${err.message}`);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -463,16 +467,27 @@ const OCR = () => {
                         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-white">
                             <button
                                 onClick={() => setIsResultModalOpen(false)}
-                                className="flex-1 py-3.5 border border-border text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition-colors text-sm"
+                                disabled={isSaving}
+                                className="flex-1 py-3.5 border border-border text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
                             >
                                 취소
                             </button>
                             <button
                                 onClick={handleAddTransaction}
-                                className="flex-[2] py-3.5 bg-primary text-white rounded-xl font-bold hover:opacity-90 transition-opacity shadow-md text-sm flex items-center justify-center gap-2"
+                                disabled={isSaving}
+                                className={`flex-[2] py-3.5 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90 transition-opacity shadow-md'} text-sm`}
                             >
-                                <Check className="w-4 h-4" />
-                                내역 저장하기
+                                {isSaving ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        <span>저장 중...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="w-4 h-4" />
+                                        내역 저장하기
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

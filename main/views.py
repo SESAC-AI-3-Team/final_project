@@ -984,9 +984,12 @@ def board_image_upload_api(request, meeting_id):
             from PIL import Image
             import io
             import datetime
-            from .r2 import upload_file_obj_to_r2
+            from .r2 import upload_file_obj_to_r2, fix_image_orientation
 
             img = Image.open(image_file)
+            # Fix orientation before any processing (especially before WebP conversion which strips EXIF)
+            img = fix_image_orientation(img)
+
             if img.mode != 'RGB':
                 img = img.convert('RGB')
             
@@ -1630,9 +1633,12 @@ def create_transaction_api(request, meeting_id):
                 from PIL import Image
                 import io
                 import datetime
-                from .r2 import upload_file_obj_to_r2
+                from .r2 import upload_file_obj_to_r2, fix_image_orientation
 
                 img = Image.open(receipt_file)
+                # Fix orientation before WebP conversion
+                img = fix_image_orientation(img)
+
                 if img.mode != 'RGB':
                     img = img.convert('RGB')
                 

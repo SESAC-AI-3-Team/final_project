@@ -26,6 +26,7 @@ const Board = () => {
     const [isCopied, setIsCopied] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [replyTo, setReplyTo] = useState(null); // { id, author }
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const itemsPerPage = 15;
 
     const handleCopyInviteCode = async () => {
@@ -99,23 +100,26 @@ const Board = () => {
 
     const handleCreatePost = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
         let uploadedImageUrls = [];
 
-        for (const item of newPostImages) {
-            const formData = new FormData();
-            formData.append('image', item.file);
-            try {
-                const uploadRes = await fetch(`/api/meetings/${id}/posts/upload/`, { method: 'POST', body: formData });
-                if (uploadRes.ok) {
-                    const uploadData = await uploadRes.json();
-                    uploadedImageUrls.push(uploadData.imageUrl);
-                }
-            } catch (error) {
-                console.error("Image upload failed:", error);
-            }
-        }
-
         try {
+            for (const item of newPostImages) {
+                const formData = new FormData();
+                formData.append('image', item.file);
+                try {
+                    const uploadRes = await fetch(`/api/meetings/${id}/posts/upload/`, { method: 'POST', body: formData });
+                    if (uploadRes.ok) {
+                        const uploadData = await uploadRes.json();
+                        uploadedImageUrls.push(uploadData.imageUrl);
+                    }
+                } catch (error) {
+                    console.error("Image upload failed:", error);
+                }
+            }
+
             const response = await fetch(`/api/meetings/${id}/posts/create/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,6 +148,8 @@ const Board = () => {
         } catch (error) {
             console.error("Post creation failed:", error);
             alert('서버 오류가 발생했습니다.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -427,8 +433,15 @@ const Board = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-3 pt-4 border-t border-gray-100">
-                                        <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-3 border border-border rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-600">취소</button>
-                                        <button type="submit" className="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity font-medium shadow-md">작성 완료</button>
+                                        <button type="button" disabled={isSubmitting} onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-3 border border-border rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-600 disabled:opacity-50">취소</button>
+                                        <button type="submit" disabled={isSubmitting} className={`flex-1 px-4 py-3 bg-primary text-white rounded-xl font-medium shadow-md flex items-center justify-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90 transition-opacity'}`}>
+                                            {isSubmitting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <span>작성 중...</span>
+                                                </>
+                                            ) : '작성 완료'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
